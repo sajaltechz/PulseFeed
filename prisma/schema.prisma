@@ -1,0 +1,91 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum ContentType {
+  VIDEO
+  ARTICLE
+}
+
+model User {
+  id            String       @id @default(cuid())
+  name          String?
+  email         String       @unique
+  passwordHash  String?
+  role          UserRole     @default(USER)
+  image         String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  likes         Like[]
+  bookmarks     Bookmark[]
+  progress      Progress[]
+}
+
+model Content {
+  id            String       @id @default(cuid())
+  title         String
+  slug          String       @unique
+  description   String?
+  body          String?
+  mediaUrl      String?
+  thumbnailUrl  String?
+  type          ContentType
+  viewCount     Int          @default(0)
+  likeCount     Int          @default(0)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  likes         Like[]
+  bookmarks     Bookmark[]
+  progress      Progress[]
+
+  @@index([createdAt, id(sort: Desc)])
+  @@index([type, createdAt, id(sort: Desc)])
+}
+
+model Like {
+  id         String   @id @default(cuid())
+  userId     String
+  contentId  String
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content    Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, contentId])
+  @@index([contentId])
+}
+
+model Bookmark {
+  id         String   @id @default(cuid())
+  userId     String
+  contentId  String
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content    Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, contentId])
+  @@index([userId, createdAt(sort: Desc)])
+}
+
+model Progress {
+  id           String   @id @default(cuid())
+  userId       String
+  contentId    String
+  lastPosition Int      @default(0)
+  isCompleted  Boolean  @default(false)
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content      Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, contentId])
+  @@index([userId, updatedAt(sort: Desc)])
+}
