@@ -43,12 +43,12 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ items: result });
   } catch (error) {
-    const message =
+    const message: string =
       error &&
       typeof error === "object" &&
       "meta" in error &&
       typeof (error as { meta?: { message?: string } }).meta?.message === "string"
-        ? (error as { meta?: { message?: string } }).meta?.message
+        ? ((error as { meta?: { message?: string } }).meta?.message ?? "")
         : "";
 
     if (message.includes("function similarity(text, text) does not exist")) {
